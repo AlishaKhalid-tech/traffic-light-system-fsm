@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart Traffic Light FSM Simulation</title>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    height:100vh;
+    overflow:hidden;
+    background:
+    radial-gradient(circle at top left,#1e3a8a55,transparent 30%),
+    radial-gradient(circle at bottom right,#16a34a44,transparent 30%),
+    linear-gradient(to bottom right,#020617,#0f172a,#111827);
+
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.main-container{
+    width:98vw;
+    height:96vh;
+    border-radius:28px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.08);
+    backdrop-filter:blur(14px);
+    padding:18px;
+    box-shadow:0 0 40px rgba(0,0,0,0.5);
+    display:flex;
+    flex-direction:column;
+}
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+}
+
+.title{
+    font-size:34px;
+    font-weight:800;
+    background:linear-gradient(to right,#38bdf8,#22c55e);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.subtitle{
+    color:#cbd5e1;
+    margin-top:5px;
+}
+
+.controls{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+button{
+    border:none;
+    padding:12px 20px;
+    border-radius:14px;
+    cursor:pointer;
+    font-weight:700;
+    color:white;
+    transition:0.3s;
+    font-size:15px;
+}
+
+button:hover{
+    transform:translateY(-3px) scale(1.04);
+}
+
+.start-btn{
+    background:linear-gradient(to right,#16a34a,#22c55e);
+}
+
+.emergency-btn{
+    background:linear-gradient(to right,#dc2626,#ef4444);
+}
+
+.night-btn{
+    background:linear-gradient(to right,#1d4ed8,#3b82f6);
+}
+
+.resume-btn{
+    background:linear-gradient(to right,#7c3aed,#8b5cf6);
+}
+
+.dashboard{
+    flex:1;
+    display:grid;
+    grid-template-columns:1fr 2.5fr 1fr;
+    gap:18px;
+}
+
+.panel{
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:24px;
+    padding:18px;
+}
+
+.info-card{
+    margin-bottom:18px;
+    background:rgba(255,255,255,0.05);
+    border-radius:18px;
+    padding:16px;
+}
+
+.info-title{
+    color:#94a3b8;
+    font-size:13px;
+    margin-bottom:8px;
+    letter-spacing:1px;
+}
+
+.info-value{
+    font-size:28px;
+    font-weight:800;
+}
+
+.intersection{
+    position:relative;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+}
+
+.cross-road{
+    position:absolute;
+    background:#1e293b;
+    border:2px solid #475569;
+}
+
+.vertical-road{
+    width:180px;
+    height:100%;
+}
+
+.horizontal-road{
+    width:100%;
+    height:180px;
+}
+
+.lane-mark{
+    position:absolute;
+    background:white;
+    opacity:0.4;
+}
+
+.vmark{
+    width:6px;
+    height:40px;
+    left:50%;
+    transform:translateX(-50%);
+}
+
+.hmark{
+    height:6px;
+    width:40px;
+    top:50%;
+    transform:translateY(-50%);
+}
+
+.traffic-set{
+    position:absolute;
+    text-align:center;
+}
+
+.road-label{
+    margin-bottom:10px;
+    font-weight:700;
+}
+
+.traffic-light{
+    width:90px;
+    background:#0f172a;
+    padding:10px;
+    border-radius:25px;
+    box-shadow:0 0 20px rgba(0,0,0,0.5);
+}
+
+.light{
+    width:45px;
+    height:45px;
+    border-radius:50%;
+    margin:10px auto;
+    background:#1e293b;
+    opacity:0.25;
+    transition:0.3s;
+}
+
+.red.active{
+    background:red;
+    opacity:1;
+    box-shadow:0 0 25px red;
+}
+
+.yellow.active{
+    background:yellow;
+    opacity:1;
+    box-shadow:0 0 25px yellow;
+}
+
+.green.active{
+    background:lime;
+    opacity:1;
+    box-shadow:0 0 25px lime;
+}
+
+.blink{
+    animation:blink 1s infinite;
+}
+
+@keyframes blink{
+    0%,100%{opacity:1;}
+    50%{opacity:0.2;}
+}
+
+.top-road{
+    top:30px;
+}
+
+.bottom-road{
+    bottom:30px;
+}
+
+.left-road{
+    left:30px;
+}
+
+.right-road{
+    right:30px;
+}
+
+.vehicle{
+    position:absolute;
+    font-size:30px;
+    transition:all 1s linear;
+}
+
+.car1{
+    top:48%;
+    left:2%;
+}
+
+.car2{
+    top:53%;
+    right:2%;
+}
+
+.car3{
+    left:49%;
+    top:3%;
+}
+
+.car4{
+    left:44%;
+    bottom:3%;
+}
+
+.emergency{
+    font-size:34px;
+}
+
+.fsm-box{
+    margin-top:18px;
+}
+
+.states{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.state{
+    padding:10px 15px;
+    border-radius:12px;
+    background:rgba(255,255,255,0.05);
+    font-weight:700;
+    min-width:70px;
+    text-align:center;
+}
+
+.state.active{
+    background:#16a34a55;
+    border:2px solid #22c55e;
+    box-shadow:0 0 15px #22c55e55;
+}
+
+.footer{
+    text-align:center;
+    margin-top:10px;
+    color:#cbd5e1;
+    font-size:14px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="main-container">
+
+<div class="topbar">
+
+<div>
+<div class="title">
+Traffic Light Control System Using FSM
+</div>
+
+<div class="subtitle">
+Theory of Automata Project Simulation
+</div>
+</div>
+
+<div class="controls">
+
+<button class="start-btn" onclick="startSimulation()">
+<i class="fa-solid fa-play"></i> Start Simulation
+</button>
+
+<button class="emergency-btn" onclick="activateEmergency()">
+🚑 Emergency
+</button>
+
+<button class="night-btn" onclick="activateNightMode()">
+🌙 Night Mode
+</button>
+
+<button class="resume-btn" onclick="resumeNormal()">
+⟳ Resume FSM
+</button>
+
+</div>
+
+</div>
+
+<div class="dashboard">
+
+<!-- LEFT PANEL -->
+
+<div class="panel">
+
+<div class="info-card">
+<div class="info-title">CURRENT STATE</div>
+<div class="info-value" id="currentState">S0</div>
+</div>
+
+<div class="info-card">
+<div class="info-title">NEXT TRANSITION</div>
+<div class="info-value" id="transitionText">S0 → S1</div>
+</div>
+
+<div class="info-card">
+<div class="info-title">TIMER</div>
+<div class="info-value">
+<span id="timer">10</span>s
+</div>
+</div>
+
+<div class="fsm-box">
+
+<h3 style="margin-bottom:15px;">FSM STATES</h3>
+
+<div class="states">
+<div class="state active" id="state-S0">S0</div>
+<div class="state" id="state-S1">S1</div>
+<div class="state" id="state-S2">S2</div>
+<div class="state" id="state-S3">S3</div>
+<div class="state" id="state-S4">S4</div>
+<div class="state" id="state-S5">S5</div>
+</div>
+
+</div>
+
+</div>
+
+<!-- CENTER INTERSECTION -->
+
+<div class="panel intersection">
+
+<div class="cross-road vertical-road"></div>
+<div class="cross-road horizontal-road"></div>
+
+<!-- lane markings -->
+
+<div class="lane-mark vmark" style="top:5%;"></div>
+<div class="lane-mark vmark" style="top:18%;"></div>
+<div class="lane-mark vmark" style="top:31%;"></div>
+<div class="lane-mark vmark" style="top:64%;"></div>
+<div class="lane-mark vmark" style="top:77%;"></div>
+
+<div class="lane-mark hmark" style="left:5%;"></div>
+<div class="lane-mark hmark" style="left:20%;"></div>
+<div class="lane-mark hmark" style="left:35%;"></div>
+<div class="lane-mark hmark" style="left:60%;"></div>
+<div class="lane-mark hmark" style="left:75%;"></div>
+
+<!-- TRAFFIC LIGHTS -->
+
+<div class="traffic-set top-road">
+<div class="road-label">North Road</div>
+
+<div class="traffic-light">
+<div class="light red" id="north-red"></div>
+<div class="light yellow" id="north-yellow"></div>
+<div class="light green" id="north-green"></div>
+</div>
+</div>
+
+<div class="traffic-set bottom-road">
+<div class="road-label">South Road</div>
+
+<div class="traffic-light">
+<div class="light red" id="south-red"></div>
+<div class="light yellow" id="south-yellow"></div>
+<div class="light green" id="south-green"></div>
+</div>
+</div>
+
+<div class="traffic-set left-road">
+<div class="road-label">West Road</div>
+
+<div class="traffic-light">
+<div class="light red" id="west-red"></div>
+<div class="light yellow" id="west-yellow"></div>
+<div class="light green" id="west-green"></div>
+</div>
+</div>
+
+<div class="traffic-set right-road">
+<div class="road-label">East Road</div>
+
+<div class="traffic-light">
+<div class="light red" id="east-red"></div>
+<div class="light yellow" id="east-yellow"></div>
+<div class="light green" id="east-green"></div>
+</div>
+</div>
+
+<!-- VEHICLES -->
+
+<div class="vehicle car1" id="car1">🚗</div>
+<div class="vehicle car2" id="car2">🚙</div>
+<div class="vehicle car3" id="car3">🚕</div>
+<div class="vehicle car4" id="car4">🚌</div>
+
+<div class="vehicle emergency" id="ambulance"
+style="top:45%; left:5%; display:none;">
+🚑
+</div>
+
+</div>
+
+<!-- RIGHT PANEL -->
+
+<div class="panel">
+
+<h2 style="margin-bottom:18px;">Simulation Details</h2>
+
+<div style="line-height:2; color:#cbd5e1;">
+
+<p><strong>S0:</strong> North/South GREEN (10s)</p>
+
+<p><strong>S1:</strong> North/South YELLOW (3s)</p>
+
+<p><strong>S2:</strong> East/West GREEN (10s)</p>
+
+<p><strong>S3:</strong> East/West YELLOW (3s)</p>
+
+<p><strong>S4:</strong> Emergency Mode (5s)</p>
+
+<p><strong>S5:</strong> Night Mode</p>
+
+</div>
+
+<div class="footer">
+Only one road direction gets GREEN at a time.
+FSM prevents traffic conflicts.
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const states = ["S0","S1","S2","S3"];
+
+const durations = {
+    S0:10,
+    S1:3,
+    S2:10,
+    S3:3,
+    S4:5
+};
+
+let currentIndex = 0;
+let timerValue = 10;
+let interval;
+let started = false;
+let mode = "normal";
+
+const timerDisplay = document.getElementById("timer");
+
+function clearLights(){
+
+    document.querySelectorAll(".light").forEach(light=>{
+        light.classList.remove("active");
+        light.classList.remove("blink");
+    });
+}
+
+function clearStates(){
+    document.querySelectorAll(".state").forEach(s=>{
+        s.classList.remove("active");
+    });
+}
+
+function activateState(state){
+
+    clearStates();
+    document.getElementById(`state-${state}`).classList.add("active");
+}
+
+function setAllRed(){
+
+    ["north","south","east","west"].forEach(r=>{
+        document.getElementById(`${r}-red`).classList.add("active");
+    });
+}
+
+function updateLights(state){
+
+    clearLights();
+    activateState(state);
+
+    document.getElementById("currentState").innerText = state;
+
+    if(state==="S0"){
+
+        document.getElementById("north-green").classList.add("active");
+        document.getElementById("south-green").classList.add("active");
+
+        document.getElementById("east-red").classList.add("active");
+        document.getElementById("west-red").classList.add("active");
+
+        document.getElementById("transitionText").innerText="S0 → S1";
+
+        timerValue = durations.S0;
+    }
+
+    else if(state==="S1"){
+
+        document.getElementById("north-yellow").classList.add("active");
+        document.getElementById("south-yellow").classList.add("active");
+
+        document.getElementById("east-red").classList.add("active");
+        document.getElementById("west-red").classList.add("active");
+
+        document.getElementById("transitionText").innerText="S1 → S2";
+
+        timerValue = durations.S1;
+    }
+
+    else if(state==="S2"){
+
+        document.getElementById("east-green").classList.add("active");
+        document.getElementById("west-green").classList.add("active");
+
+        document.getElementById("north-red").classList.add("active");
+        document.getElementById("south-red").classList.add("active");
+
+        document.getElementById("transitionText").innerText="S2 → S3";
+
+        timerValue = durations.S2;
+    }
+
+    else if(state==="S3"){
+
+        document.getElementById("east-yellow").classList.add("active");
+        document.getElementById("west-yellow").classList.add("active");
+
+        document.getElementById("north-red").classList.add("active");
+        document.getElementById("south-red").classList.add("active");
+
+        document.getElementById("transitionText").innerText="S3 → S0";
+
+        timerValue = durations.S3;
+    }
+
+    else if(state==="S4"){
+
+        setAllRed();
+
+        document.getElementById("west-red").classList.remove("active");
+        document.getElementById("west-green").classList.add("active");
+
+        document.getElementById("transitionText").innerText=
+        "Emergency Vehicle Priority";
+
+        document.getElementById("ambulance").style.display="block";
+
+        timerValue = durations.S4;
+    }
+
+    else if(state==="S5"){
+
+        ["north","south","east","west"].forEach(r=>{
+
+            document.getElementById(`${r}-yellow`)
+            .classList.add("active");
+
+            document.getElementById(`${r}-yellow`)
+            .classList.add("blink");
+        });
+
+        document.getElementById("transitionText").innerText=
+        "Night Mode Active";
+
+        timerValue = 999;
+    }
+
+    timerDisplay.innerText = timerValue;
+}
+
+function startSimulation(){
+
+    if(started) return;
+
+    started = true;
+
+    updateLights("S0");
+
+    interval = setInterval(()=>{
+
+        if(mode!=="normal") return;
+
+        timerValue--;
+
+        timerDisplay.innerText = timerValue;
+
+        if(timerValue<=0){
+
+            currentIndex = (currentIndex+1)%states.length;
+
+            updateLights(states[currentIndex]);
+        }
+
+    },1000);
+}
+
+function activateEmergency(){
+
+    mode="emergency";
+
+    clearInterval(interval);
+
+    updateLights("S4");
+
+    setTimeout(()=>{
+
+        document.getElementById("ambulance").style.display="none";
+
+        resumeNormal();
+
+    },5000);
+}
+
+function activateNightMode(){
+
+    mode="night";
+
+    clearInterval(interval);
+
+    updateLights("S5");
+}
+
+function resumeNormal(){
+
+    mode="normal";
+
+    clearInterval(interval);
+
+    currentIndex=0;
+
+    updateLights("S0");
+
+    interval = setInterval(()=>{
+
+        if(mode!=="normal") return;
+
+        timerValue--;
+
+        timerDisplay.innerText = timerValue;
+
+        if(timerValue<=0){
+
+            currentIndex=(currentIndex+1)%states.length;
+
+            updateLights(states[currentIndex]);
+        }
+
+    },1000);
+}
+
+</script>
+
+</body>
+</html>
